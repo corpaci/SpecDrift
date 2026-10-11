@@ -15,12 +15,9 @@ Six naming schemes, identical structure throughout — only the identifiers chan
     homoglyph   a а e е o о          Latin/Cyrillic pairs, differing only in codepoint
 
 The prediction is that accuracy falls and the merge rate rises monotonically.
-Note the oracle's parser rejects non-ASCII identifiers, so the `homoglyph`
-rendering cannot be round-trip checked; it is correct by construction
-(deterministic substitution on an already-verified syntax tree). Answers are
-unaffected — the output contract asks for lowercase ASCII letters — but a model
-that echoes the Cyrillic glyphs will score `unparseable`, which is itself a
-result and is reported separately.
+The current oracle preserves distinct Unicode identifier spellings, including
+Latin/Cyrillic homoglyphs. The published study used the earlier ASCII parser;
+regrading echoed Unicode can therefore change its historical coverage counts.
 
     python3 dose_confusable.py --dry-run | --run | --report
 """
@@ -218,7 +215,7 @@ def figure(acc, merge, pooled) -> None:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
-    from analyze import GRID, INK, INK_2, SERIES, SURFACE
+    from report_support import GRID, INK, INK_2, SERIES, SURFACE
     plt.rcParams.update({"figure.facecolor": SURFACE, "axes.facecolor": SURFACE,
                          "savefig.facecolor": SURFACE, "font.size": 9, "text.color": INK,
                          "axes.labelcolor": INK, "xtick.color": INK_2,
@@ -249,6 +246,7 @@ def figure(acc, merge, pooled) -> None:
     fig.suptitle("Confusability dose-response: structure held constant, identifiers varied",
                  fontweight="bold", y=1.02)
     fig.tight_layout()
+    (HERE / "figures").mkdir(exist_ok=True)
     fig.savefig(HERE / "figures" / "13-dose-response.png", dpi=170, bbox_inches="tight")
     plt.close(fig)
 

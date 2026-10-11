@@ -134,7 +134,7 @@ def run() -> None:
 def report() -> None:
     from oracle import SemanticOracle
     import numpy as np
-    from analyze import holm, mcnemar_exact
+    from report_support import holm, mcnemar_exact
     oracle = SemanticOracle()
     by = defaultdict(dict)
     rows = 0
@@ -200,7 +200,7 @@ def figure(by) -> None:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
-    from analyze import GRID, INK, INK_2, SERIES, SURFACE
+    from report_support import GRID, INK, INK_2, SERIES, SURFACE
     plt.rcParams.update({"figure.facecolor": SURFACE, "axes.facecolor": SURFACE,
                          "savefig.facecolor": SURFACE, "font.size": 9, "text.color": INK,
                          "axes.labelcolor": INK, "xtick.color": INK_2,
@@ -233,6 +233,7 @@ def figure(by) -> None:
     fig.suptitle("One anti-transformation instruction, 150 laws per bar",
                  fontweight="bold", y=1.02)
     fig.tight_layout()
+    (HERE / "figures").mkdir(exist_ok=True)
     fig.savefig(HERE / "figures" / "12-control-probe.png", dpi=170, bbox_inches="tight")
     plt.close(fig)
 

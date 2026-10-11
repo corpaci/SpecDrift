@@ -275,7 +275,7 @@ def report() -> None:
     # paired tests: the three conditions are shown the same 150 laws, so
     # McNemar is the right test and Holm bounds the family within each model.
     import numpy as np
-    from analyze import holm, mcnemar_exact, wilson
+    from report_support import holm, mcnemar_exact, wilson
     by_node = defaultdict(dict)
     for r in rows:
         if r["outcome"] != "error":
@@ -324,7 +324,7 @@ def figure(acc, stats) -> None:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
-    from analyze import GRID, INK, INK_2, SERIES, SURFACE
+    from report_support import GRID, INK, INK_2, SERIES, SURFACE
 
     plt.rcParams.update({"figure.facecolor": SURFACE, "axes.facecolor": SURFACE,
                          "savefig.facecolor": SURFACE, "font.size": 9, "text.color": INK,
@@ -359,6 +359,7 @@ def figure(acc, stats) -> None:
                  "(150 laws per bar; placebo is length-matched to generous)",
                  fontweight="bold", y=1.02)
     fig.tight_layout()
+    (HERE / "figures").mkdir(exist_ok=True)
     fig.savefig(HERE / "figures" / "11-note-ablation.png", dpi=170, bbox_inches="tight")
     plt.close(fig)
 

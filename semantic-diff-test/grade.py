@@ -27,13 +27,12 @@ verbose models.
 
 ## Outcomes
 
-`equivalent` / `weaker` / `stronger` / `incomparable` / `unknown` come from the
-oracle. `off_catalogue` means the answer is a well-formed magma identity that is
-not an ETP node (order > 4, say) — a different failure from `unparseable`, and
-worth separating. `content_filter` and `error` are calls that never produced a
-usable response; all three of the last are excluded from accuracy denominators
-and reported as a loss table, because the loss is not random across
-representations.
+The paper's `equivalent` reporting bucket includes the oracle's `equal` and
+`equivalent` verdicts; `oracle_label` retains that distinction. `weaker`,
+`stronger`, `incomparable`, and `unknown` keep their oracle meanings.
+`off_catalogue` includes above-order-four identities and unsupported fragment
+constructs. Only `content_filter` and `error` are excluded from recovery
+denominators; unparseable and off-catalogue answers remain unsuccessful trials.
 
     python3 grade.py              # -> results/graded.json
     python3 grade.py --tag smoke- # grade a smoke run instead
@@ -108,7 +107,9 @@ def outcome_for(oracle: SemanticOracle, node: int, identity: str | None) -> tupl
     verdict = oracle.compare(node, identity)
     status = verdict.generated.get("status")
     if status == "mapped":
-        return verdict.label, {"generated_node": verdict.generated.get("node"),
+        outcome = "equivalent" if verdict.label == "equal" else verdict.label
+        return outcome, {"oracle_label": verdict.label,
+                               "generated_node": verdict.generated.get("node"),
                                "generated_normalized": verdict.generated.get("normalized"),
                                "evidence": verdict.evidence}
     if status == "outside-fragment":
@@ -122,8 +123,8 @@ def grade_rows(tag: str) -> list[dict]:
     sample = {r["node"]: r for r in json.loads((HERE / "sample.json").read_text())["equations"]}
     notes = json.loads((HERE / "prompts.json").read_text())["representations"]
 
-    # A retried call leaves its failed attempt behind in the log, so keep the
-    # last row per key and let a recovered call supersede the error it replaced.
+    # A retried call leaves its failed attempt behind in the log. Replace errors
+    # until a non-error row arrives, then keep that first accepted row per key.
     latest: dict[tuple, dict] = {}
     for path in sorted(HERE.glob(f"*/{tag}*.jsonl")):
         for line in path.read_text(encoding="utf-8").splitlines():
@@ -189,11 +190,12 @@ def main() -> None:
           Counter(r["outcome"] for r in rows).most_common()), file=sys.stderr)
     print("strategies: " + ", ".join(f"{k}={v}" for k, v in
           Counter(r["strategy"] for r in rows).most_common()), file=sys.stderr)
-    if gradeable:
+    answered = [r for r in rows if r["outcome"] not in ("content_filter", "error")]
+    if answered:
         correct = sum(r["correct"] for r in rows)
         strict = sum(r["correct"] and r["strict"] for r in rows)
-        print(f"lenient accuracy {correct/len(rows)*100:.1f}% of all rows; "
-              f"strict {strict/len(rows)*100:.1f}%; "
+        print(f"certified recovery {correct/len(answered)*100:.1f}% of answered rows; "
+              f"strict {strict/len(answered)*100:.1f}%; "
               f"gradeable {len(gradeable)/len(rows)*100:.1f}%", file=sys.stderr)
 
 
