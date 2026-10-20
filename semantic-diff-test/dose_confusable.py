@@ -1,9 +1,10 @@
-"""Dose-response: does variable-merging rise with visual confusability?
+"""Identifier study: recovery and a fewer-variable proxy across naming schemes.
 
-ANALYSIS.md §3 reports that on `confusable_vars`, 93.7% of `weaker` answers use
-fewer distinct variables than the law shown — models collapse `l`, `I`, `ll` into
-one variable, and merging universally-quantified variables yields a strictly
-weaker law. That is one adversarial naming scheme. This turns it into a curve.
+The paper reports that 93.7% of proven-weaker main responses on
+`confusable_vars` use fewer distinct variables than the source law.
+Fewer variables is a proxy, not proof of a pure variable-identification edit.
+Identifying universally quantified variables can weaken a law; strictness
+requires evidence that the reverse implication fails.
 
 Six naming schemes, identical structure throughout — only the identifiers change:
 
@@ -14,7 +15,7 @@ Six naming schemes, identical structure throughout — only the identifiers chan
     repeat      l ll lll llll ...    ASCII, differing only in length
     homoglyph   a а e е o о          Latin/Cyrillic pairs, differing only in codepoint
 
-The prediction is that accuracy falls and the merge rate rises monotonically.
+The schemes are categorical, not a calibrated numerical confusability scale.
 The current oracle preserves distinct Unicode identifier spellings, including
 Latin/Cyrillic homoglyphs. The published study used the earlier ASCII parser;
 regrading echoed Unicode can therefore change its historical coverage counts.
@@ -172,21 +173,24 @@ def report() -> None:
                 merge[(mid, lvl)][0] += got < laws[r["node"]]["variables"]
                 merge[(mid, lvl)][1] += 1
 
-    print("accuracy by naming scheme (150 laws each)\n")
+    print("certified recovery by naming scheme (150 expected laws per model; "
+          "transport/filter losses excluded)\n")
     print(f"{'model':24} " + " ".join(f"{l:>11}" for l in LEVELS))
     for mid in MODEL_IDS:
         cells = [acc[(mid, l)] for l in LEVELS]
         print(f"{mid.split('/')[-1]:24} " + " ".join(
             f"{(c[0]/c[1]*100 if c[1] else float('nan')):10.1f}%" for c in cells))
 
-    print("\nshare of wrong answers that MERGE variables (fewer distinct than shown)\n")
+    print("\nfewer-variable proxy: share of non-recovered outputs with countable "
+          "variables that use fewer distinct names than the source\n"
+          "(not proof of a pure variable-merge edit)\n")
     print(f"{'model':24} " + " ".join(f"{l:>11}" for l in LEVELS))
     for mid in MODEL_IDS:
         cells = [merge[(mid, l)] for l in LEVELS]
         print(f"{mid.split('/')[-1]:24} " + " ".join(
             f"{(c[0]/c[1]*100 if c[1] else float('nan')):10.1f}%" for c in cells))
 
-    print(f"\npooled over models: {'level':12} {'accuracy':>10} {'merge rate':>12} "
+    print(f"\npooled over models: {'scheme':12} {'recovery':>10} {'fewer vars.':>12} "
           f"{'unparseable':>12}")
     pooled = {}
     for lvl in LEVELS:
@@ -199,6 +203,7 @@ def report() -> None:
               f"{(g[0]/g[1]*100 if g[1] else float('nan')):11.1f}% {u/tot*100:11.1f}%")
 
     figure(acc, merge, pooled)
+    # Keep historical "accuracy"/"merge" keys for archive-analysis compatibility.
     (OUT / "dose_summary.json").write_text(json.dumps(
         {"levels": LEVELS, "schemes": {k: list(v) for k, v in SCHEMES.items()},
          "pooled": pooled,
@@ -210,7 +215,7 @@ def report() -> None:
 
 
 def figure(acc, merge, pooled) -> None:
-    """Accuracy falling and merge rate rising across the confusability gradient."""
+    """Recovery and the fewer-variable proxy for categorical naming schemes."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -229,22 +234,26 @@ def figure(acc, merge, pooled) -> None:
                  color=(SERIES + ["#c2185b"])[i], label=mid.split("/")[-1][:18])
     ax1.plot(x, [pooled[l]["acc"][0] / pooled[l]["acc"][1] * 100 for l in LEVELS],
              "o-", ms=7, lw=2.8, color=INK, label="pooled", zorder=5)
-    ax1.set_ylabel("accuracy (% equivalent)")
-    ax1.set_title("Accuracy falls as identifiers become confusable", fontweight="bold")
+    ax1.set_ylabel("Certified recovery (%)")
+    ax1.set_title("Recovery by naming scheme", fontweight="bold")
     ax1.legend(frameon=False, fontsize=7, ncol=2)
 
     merged = [pooled[l]["merge"][0] / pooled[l]["merge"][1] * 100 for l in LEVELS]
     ax2.plot(x, merged, "o-", ms=7, lw=2.8, color=SERIES[1])
     for xi, v in zip(x, merged):
         ax2.text(xi, v + 2.5, f"{v:.0f}%", ha="center", fontsize=8, color=INK)
-    ax2.set_ylabel("share of wrong answers that merge variables", color=SERIES[1])
+    ax2.set_ylabel("Fewer-variable proxy (%)", color=SERIES[1])
     ax2.set_ylim(0, 112)
-    ax2.set_title("...and the errors become variable merges", fontweight="bold")
+    ax2.set_title("Among non-recovered outputs with countable variables", fontweight="bold",
+                  fontsize=10)
     for ax in (ax1, ax2):
         ax.set_xticks(x, LEVELS, rotation=25, ha="right")
         ax.grid(axis="y", color=GRID, lw=0.6); ax.set_axisbelow(True)
-    fig.suptitle("Confusability dose-response: structure held constant, identifiers varied",
+    fig.suptitle("Identifier study: structure held constant, naming scheme varied",
                  fontweight="bold", y=1.02)
+    fig.text(0.5, -0.03,
+             "Schemes are categorical. Fewer variables does not establish a pure variable-merge edit.",
+             ha="center", fontsize=9)
     fig.tight_layout()
     (HERE / "figures").mkdir(exist_ok=True)
     fig.savefig(HERE / "figures" / "13-dose-response.png", dpi=170, bbox_inches="tight")

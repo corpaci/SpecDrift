@@ -1,21 +1,18 @@
-"""Ablation: how much of the representation effect is carried by my notation note?
+"""Notation-note study: recovery under four documentation conditions.
 
-The headline claim in ANALYSIS.md is a minimal pair — `text2` (68.5%) against
-`polish` (16.9%), the same prefix order with the English scaffolding removed.
-The obvious objection is that the gap is an artifact of the notes I wrote, since
-those are the one authored, per-representation part of the prompt. This measures
-that directly.
+The study compares the contribution of notation notes to recovery from
+four encodings, including nested English and Polish (prefix) notation.
 
-Three conditions on the same laws, models and frame:
+Four conditions on the same laws, models and frame:
 
     none      the note is removed entirely
     current   the note used in the main run (27-39 tokens)
+    padded    the current note with on-topic padding toward generous-note length
     generous  a deliberately helpful note: the reading rule spelled out, plus a
               worked micro-example
 
-If the `text2`/`polish` gap survives `none`, the effect belongs to the notation.
-If `generous` closes it, the difficulty is explicable rather than intrinsic —
-which is a different and also useful finding.
+The intervention combines reading rules and examples; it does not isolate
+their individual effects. Padding is not guaranteed to be cognitively inert.
 
 Four representations (the minimal pair, the extreme case, and a high-band
 symbolic control), four models spanning small to frontier, and the 150-equation
@@ -250,7 +247,8 @@ def report() -> None:
         lens = {c: len(enc.encode(note_table[rep][c])) for c in CONDITIONS}
         print(f"  {rep:10} " + "  ".join(f"{c}={lens[c]:3}" for c in CONDITIONS))
 
-    print(f"\naccuracy by model × representation × note condition (n=150 each)\n")
+    print("\ncertified recovery by model × representation × note condition "
+          "(150 expected laws per cell; transport/filter losses excluded)\n")
     print(f"{'model':24} {'rep':10} " + " ".join(f"{c:>9}" for c in CONDITIONS)
           + "   placebo−current  generous−placebo")
     for mid in MODEL_IDS:
@@ -319,7 +317,7 @@ def report() -> None:
 
 
 def figure(acc, stats) -> None:
-    """One panel per representation: accuracy under each note condition."""
+    """One panel per representation: certified recovery under each note condition."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -352,11 +350,11 @@ def figure(acc, stats) -> None:
         ax.set_ylim(0, 108)
         ax.grid(axis="y", color=GRID, lw=0.6)
         ax.set_axisbelow(True)
-    axes[0].set_ylabel("accuracy (% equivalent)")
+    axes[0].set_ylabel("Certified recovery (%)")
     axes[0].legend(frameon=True, framealpha=0.95, edgecolor=GRID, fontsize=8,
                    loc="lower left", title="notation note")
     fig.suptitle("Removing, padding, or expanding the notation note "
-                 "(150 laws per bar; placebo is length-matched to generous)",
+                 "(150 expected laws per bar; padded is within five tokens of generous)",
                  fontweight="bold", y=1.02)
     fig.tight_layout()
     (HERE / "figures").mkdir(exist_ok=True)

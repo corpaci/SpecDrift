@@ -1,1 +1,55 @@
 dev/
+
+# Credentials and local Python environments
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.cache/
+.DS_Store
+
+# Generated converter catalogues and experiment inputs
+/translate/*/etp_equations_*
+/translate/nl/prompts/
+/translate/nl_test/prompts/
+/semantic-diff-test/frame.txt
+/semantic-diff-test/sample.json
+/semantic-diff-test/prompts.json
+/semantic-diff-test/*/note.txt
+/semantic-diff-test/*/prompt_template.txt
+/semantic-diff-test/*/example_prompt.txt
+
+# Generated responses, analysis, figures, and earlier-study inputs
+/semantic-diff-test/*/raw-*.jsonl
+/semantic-diff-test/*/smoke-*.jsonl
+/semantic-diff-test/results/
+/semantic-diff-test/figures/
+/semantic-diff-test/ablation/
+/semantic-diff-test/control_probe/
+/semantic-diff-test/dose_confusable/
+/semantic-diff-test/kimi-k2-partial/
+/translate/nl/descriptions-*.json
+/implications/data/
+/implications/implications.json
+/implications/implications_rendered.json
+/implications/test_implications/results/
+/implications/test_implications/logs/
+
+# LaTeX build files; retain the submitted PDF and source figures
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Local manuscript working files and source export
+/Semantic_Drift___SPS_Apart_Research_Neurips_Vericodegen.zip
+/submission/CAMERA-READY-STEPS.md
+/submission/paper-clear.tex

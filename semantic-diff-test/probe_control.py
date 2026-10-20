@@ -1,16 +1,10 @@
-"""Why does the control arm fail? Isolating the mechanism.
+"""Framing study: recovery under four instruction conditions.
 
-`etp_canonical` shows the model the law verbatim in the answer format and scores
-49.6% — 12th of 18 (ANALYSIS.md §2). Three explanations are consistent with that:
-
-  H1  the instruction "Recover the identity itself" implies a transformation;
-  H2  the magma preamble frames this as a task, so the model performs one;
-  H3  it is specific to being shown the answer in the answer's own notation.
-
-This is a 2x2 over the first two, on two representations. `etp_canonical` is
-where the effect lives; `latex` is the comparison arm — a genuine translation
-task, where an anti-transformation instruction should do little. If H3 is what
-matters, the manipulations move `etp_canonical` and leave `latex` alone.
+The canonical condition presents the law in the requested output notation.
+This 2x2 study varies an explicit preservation instruction and the magma
+preamble on canonical and LaTeX inputs, with fresh 150-law baselines.
+It measures instruction sensitivity; it does not uniquely identify a
+psychological mechanism or an intrinsic notation-difficulty ranking.
 
     baseline      the prompt used in the main run
     no_transform  + an explicit "write exactly the identity shown, do not derive,
@@ -227,7 +221,7 @@ def figure(by) -> None:
                                  else "  (translation arm)"), fontweight="bold")
         ax.set_xticks(x, labels, rotation=32, ha="right", fontsize=7.5)
         ax.set_ylim(0, 112); ax.grid(axis="y", color=GRID, lw=0.6); ax.set_axisbelow(True)
-    axes[0].set_ylabel("accuracy (% equivalent)")
+    axes[0].set_ylabel("Certified recovery (%)")
     axes[0].legend(frameon=True, framealpha=0.95, edgecolor=GRID, fontsize=8,
                    loc="upper left", title="prompt condition")
     fig.suptitle("One anti-transformation instruction, 150 laws per bar",
