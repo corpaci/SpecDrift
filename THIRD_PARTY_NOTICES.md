@@ -51,3 +51,18 @@ generated through the OpenRouter API by these endpoints:
 
 Responses you collect with `run_experiment.py` are subject to OpenRouter's
 terms and to the terms of each model's developer.
+
+## Manuscript and workshop template
+
+The final manuscript is by Malhar Alpesh Patel and Luiza Cristina Corpaci.
+Its acknowledgments credit Apart Research and the Secure Program Synthesis
+Fellowship. The [code/data archive](https://doi.org/10.5281/zenodo.23392977)
+is cited by the final submission.
+
+The workshop style in `template/neurips_2026_vericode.sty` retains its
+upstream attribution to Roman Garnett and earlier NeurIPS style authors.
+The template, manuscript, and associated figures are distinct from the
+repository's original software. This notice does not relicense them under MIT
+or establish additional redistribution terms. Consult their source notices
+and publication terms; a separate manuscript/template license is not declared
+here.

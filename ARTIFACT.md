@@ -8,12 +8,16 @@ The artifact has two parts:
 
 - **This repository**: the oracle, the 17 converters with their inverse
   readers, the sampling and prompt code, the experiment runners and the grader.
-- **The data archive** `semantic-drift-vericodegen.zip`, the paper's
+- **The [code and data archive](https://doi.org/10.5281/zenodo.23392977)**,
+  cited in the final submission (archive name: `semantic-drift-vericodegen.zip`), the paper's
   supplementary material: the 153,000 stored responses, the generated inputs,
   the graded results, the analysis script, and `check_paper_numbers.py`, which
   checks 427 numbers printed in the paper. Its README describes it.
 
-Nothing below calls a model API unless stated.
+See [WORKFLOWS.md](WORKFLOWS.md) for the full workflow guide and
+[submission/paper.pdf](submission/paper.pdf) for the final submission.
+Nothing below calls a model API unless stated. Dependency and tokenizer
+setup may access the network.
 
 ## 1. Regenerate the experiment inputs
 
@@ -35,7 +39,8 @@ Step 3 checks this.
 
 ## 2. Reproduce the paper's numbers
 
-Unzip the data archive and run, inside it:
+Download and unzip the [archive cited by the paper](https://doi.org/10.5281/zenodo.23392977)
+and run, inside it:
 
 ```sh
 bash regenerate.sh
@@ -54,11 +59,21 @@ bash artifact/check_against_archive.sh /path/to/semantic-drift-vericodegen
 ```
 
 The script works in a temporary copy and changes neither this repository nor
-the archive. Expected output:
+the archive. Previously recorded comparison output:
 
 - `PASS 76 generated inputs match the archive`. This is skipped if `ETP_OUTCOMES` is unset.
-- `402 of 427 checks passed.` The 25 other values move because this
-  repository's grader is newer than the paper's (see below).
+- `402 of 427 checks passed.` The existing comparison attributes the 25
+  differences to a newer grader (see below).
+
+**Exit status:** any failed numerical check now returns a nonzero status,
+including the documented differences. A checker error also propagates.
+The script no longer suppresses failures or treats a count of 25 mismatches
+as an approved exception set. Use the archive's historical code for exact
+reproduction. The recorded comparison below has not been rerun against the
+final submission during this update.
+
+The proposed revision of the paper-versus-code explanation is available as
+[a draft for author review](docs/PAPER_CODE_DIFFERENCES_DRAFT.md).
 
 ## How this grader differs from the paper's
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Check this repository against the paper's data archive, offline.
+# Check this repository against the paper's data archive without model calls.
 #
 #   bash artifact/check_against_archive.sh /path/to/semantic-drift-vericodegen
 #
@@ -9,12 +9,12 @@
 #    (content only; build timestamps and source paths are ignored).
 # 2. Grading: regrades the archive's stored responses with this repository's
 #    grader, reruns the analysis and the three follow-up reports, and runs the
-#    archive's check of the 427 numbers printed in the paper. The expected result
-#    is 402 of 427: the 25 values listed in ARTIFACT.md move because this grader
-#    is newer than the one that produced the paper.
+#    archive's numerical checker. Any failed check is a failing exit status,
+#    including previously documented differences from the historical grader.
+#    A count of 25 failures is not sufficient to establish which values changed.
 #
 # Nothing is written to this repository or to the archive; work happens in a
-# temporary copy. No model API calls are made.
+# temporary copy. No model API calls are made. uv may download dependencies.
 set -euo pipefail
 ARCHIVE="$(cd "${1:?usage: check_against_archive.sh /path/to/semantic-drift-vericodegen}" && pwd)"
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
@@ -28,7 +28,13 @@ else
 fi
 
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
-rsync -a --exclude .git --exclude submission --exclude template --exclude '*.zip' "$REPO/" "$WORK/"
+# Copy only executable research inputs, not credentials or local environments.
+for directory in oracle translate semantic-diff-test; do
+    rsync -a --exclude '.env' --exclude '.env.*' --exclude __pycache__ \
+        --exclude .cache --include '*/' --include '*.py' --exclude '*' \
+        "$REPO/$directory/" "$WORK/$directory/"
+done
+cp "$REPO/prepare_experiment.py" "$WORK/"
 export ETP_EQUATIONS="$ARCHIVE/etp/equations.txt"
 
 echo "== 1. experiment inputs"
@@ -50,6 +56,8 @@ files = sorted(p.relative_to(work) for p in work.rglob("*") if p.is_file() and (
         "sample.json", "prompts.json", "frame.txt", "note.txt", "prompt_template.txt",
         "example_prompt.txt", "matrix.bin", "matrix_meta.json"}))
 bad = []
+if not files:
+    bad.append("no generated inputs found")
 for rel in files:
     a, b = work / rel, archive / rel
     if not b.exists():
@@ -74,14 +82,30 @@ find . \( -name 'raw-*.jsonl' -o -path './ablation/*.jsonl' -o -path './control_
     while IFS= read -r -d '' f; do mkdir -p "$WORK/semantic-diff-test/$(dirname "$f")"; cp "$f" "$WORK/semantic-diff-test/$f"; done
 cd "$ARCHIVE"
 for f in semantic-diff-test/sample.json semantic-diff-test/prompts.json semantic-diff-test/frame.txt \
-         oracle/data/matrix.bin oracle/data/matrix_meta.json $(find translate -name 'etp_equations_*.json'); do
+         oracle/data/matrix.bin oracle/data/matrix_meta.json; do
     mkdir -p "$WORK/$(dirname "$f")"; cp "$f" "$WORK/$f"
 done
+while IFS= read -r -d '' f; do
+    mkdir -p "$WORK/$(dirname "$f")"; cp "$f" "$WORK/$f"
+done < <(find translate -name 'etp_equations_*.json' -print0)
+# Follow-up reports read the archived notation notes even when regeneration
+# was skipped. Never substitute locally edited notes for the archived inputs.
+while IFS= read -r -d '' f; do
+    mkdir -p "$WORK/$(dirname "$f")"; cp "$f" "$WORK/$f"
+done < <(find semantic-diff-test -name note.txt -print0)
 cp semantic-diff-test/analyze.py "$WORK/semantic-diff-test/"      # the paper's analysis script
 cp check_paper_numbers.py "$WORK/"
 cd "$WORK/semantic-diff-test"
-"${PY[@]}" grade.py | head -1
-"${PY[@]}" analyze.py | tail -1
+"${PY[@]}" grade.py
+"${PY[@]}" analyze.py
 for s in ablate_notes probe_control dose_confusable; do "${PY[@]}" "$s.py" --report >/dev/null; done
 cd "$WORK"
-"${PY[@]}" check_paper_numbers.py || true
+if "${PY[@]}" check_paper_numbers.py; then
+    echo "PASS numerical checks completed successfully"
+else
+    status=$?
+    echo "FAIL numerical checks exited with status $status." >&2
+    echo "Historical grader differences are documented in ARTIFACT.md;" >&2
+    echo "they are not automatically accepted as a successful reproduction." >&2
+    exit "$status"
+fi
